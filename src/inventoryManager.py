@@ -7,7 +7,7 @@ class InventoryManager:
     
         def listOutOfStock(self):
             out_of_stock: list = []
-            for item in inventory:
+            for item in self.inventory:
                 if not item.status:
                     out_of_stock.append(item)
             return out_of_stock
@@ -18,19 +18,19 @@ class InventoryManager:
                 return 
 
             newItem: Item = Item(name, quantity, status)
-            inventory.addItem(item)
+            self.inventory.addItem(item)
 
         def changeItemStatus(self, name:str, status:bool):
             if name not in self.inventory:
                 return
 
-            inventory[name].status = status
+            self.inventory[name].status = status
 
         def changeItemQuantity(self, name, quantity):
             if name not in self.inventory:
                 return
 
-            inventory[name].quantity += quantity
+            self.inventory[name].quantity += quantity
 
         def generateGroceryList(): 
             pass
