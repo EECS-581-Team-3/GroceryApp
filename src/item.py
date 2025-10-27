@@ -1,5 +1,7 @@
+from typing import Optional
+
 class Item:
-    def __init__(self, name:str, quantity:int, in_stock:bool):
+    def __init__(self, name:str, quantity:int, in_stock:Optional[bool] = None):
         self.name = name
         self.quantity = quantity
         self.in_stock = in_stock

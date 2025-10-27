@@ -1,21 +1,25 @@
+# grocery_list.py
+from typing import Dict
 from item import Item
 
 class GroceryList:
-    def __init__(self):
-        items: Dict = {}
+    def __init__(self) -> None:
+        self.items: Dict[str, Item] = {}
 
-    def add_item(self, new_item: Item):
+    def add_item(self, new_item: Item) -> None:
         if new_item.name in self.items:
-            self.items[new_item.name].quantity += new_item.quantity
+            existing = self.items[new_item.name]
+            existing.quantity = (existing.quantity or 0) + (new_item.quantity or 0)
             return
 
         self.items[new_item.name] = new_item
 
-    def change_item_quantity(self, name, quantity):
+    def change_item_quantity(self, name: str, delta: int) -> None:
         if name not in self.items:
             return
 
-        self.items[name].quantity += quantity
-        
-        if self.items[name].quantity = 0:
+        item = self.items[name]
+        item.quantity = (item.quantity or 0) + delta
+
+        if item.quantity <= 0:
             self.items.pop(name)

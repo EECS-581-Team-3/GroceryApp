@@ -1,18 +1,78 @@
-from grocery_list import GroceryList
-from enum import Enum
+# grocery_list_manager.py
+from typing import Dict, List, Optional, Any
+from item import Item
 
-class GroceryListType(Enum):
-    THIS_WEEK = 1
-    NEXT_WEEK = 2
+class InventoryManager:
+    def __init__(self, inventory: Any) -> None:
+        self.inventory = inventory
 
-class GroceryListManager:
-    def __init__(self):
-        self.grocery_lists: Dict[GroceryListType, GroceryList] = {}
+    def _items_dict(self) -> Dict[str, Item]:
+        if isinstance(self.inventory, dict):
+            return self.inventory
+        for attr in ("_items", "items", "inventory"):
+            maybe = getattr(self.inventory, attr, None)
+            if isinstance(maybe, dict):
+                return maybe
+        if hasattr(self.inventory, "all_items") and callable(getattr(self.inventory, "all_items")):
+            return {it.name: it for it in self.inventory.all_items()}
+        raise TypeError("Unsupported inventory type")
 
-    def add_grocery_list(self, new_grocery_list: GroceryList, grocery_list_type: GroceryListType):
-        if grocery_list_type in self.grocery_lists:
+    def _get_item(self, name: str) -> Optional[Item]:
+        d = self._items_dict()
+        return d.get(name)
+
+    def _store_item(self, item: Item) -> None:
+        if hasattr(self.inventory, "addItem") and callable(getattr(self.inventory, "addItem")):
+            self.inventory.addItem(item)
             return
+        if hasattr(self.inventory, "add_item") and callable(getattr(self.inventory, "add_item")):
+            self.inventory.add_item(item)
+            return
+        d = self._items_dict()
+        d[item.name] = item
 
-        self.grocery_lists[grocery_list_type] = new_grocery_list
+    def list_out_of_stock(self) -> List[Item]:
+        return [it for it in self.all_items() if not getattr(it, "inStock", getattr(it, "status", True))]
 
+    def add_item(self, name: str, quantity: int, status: bool) -> None:
+        existing = self._get_item(name)
+        if existing:
+            existing.quantity = (existing.quantity or 0) + quantity
+            if hasattr(existing, "inStock"):
+                existing.inStock = status
+            else:
+                existing.status = status
+            return
+        item = Item(name, quantity, status)
+        self._store_item(item)
 
+    def change_item_status(self, name: str, status: bool) -> None:
+        item = self._get_item(name)
+        if not item:
+            return
+        if hasattr(item, "inStock"):
+            item.inStock = status
+        else:
+            item.status = status
+
+    def change_item_quantity(self, name: str, delta: int) -> None:
+        item = self._get_item(name)
+        if not item:
+            return
+        item.quantity = (item.quantity or 0) + delta
+        if item.quantity <= 0:
+            # remove from underlying dict if applicable
+            try:
+                d = self._items_dict()
+                d.pop(name, None)
+            except TypeError:
+                # underlying storage may be via API; try a remove method if present
+                if hasattr(self.inventory, "removeItem") and callable(getattr(self.inventory, "removeItem")):
+                    self.inventory.removeItem(name)
+
+    def generate_grocery_list(self):
+        raise NotImplementedError
+
+    def all_items(self) -> List[Item]:
+        d = self._items_dict()
+        return sorted(d.values(), key=lambda it: it.name.lower())
