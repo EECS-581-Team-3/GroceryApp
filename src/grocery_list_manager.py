@@ -2,7 +2,7 @@
 from typing import Dict, List, Optional, Any
 from item import Item
 
-class InventoryManager:
+class ListManager:
     def __init__(self, inventory: Any) -> None:
         self.inventory = inventory
 
@@ -61,17 +61,21 @@ class InventoryManager:
             return
         item.quantity = (item.quantity or 0) + delta
         if item.quantity <= 0:
-            # remove from underlying dict if applicable
             try:
                 d = self._items_dict()
                 d.pop(name, None)
             except TypeError:
-                # underlying storage may be via API; try a remove method if present
                 if hasattr(self.inventory, "removeItem") and callable(getattr(self.inventory, "removeItem")):
                     self.inventory.removeItem(name)
 
-    def generate_grocery_list(self):
-        raise NotImplementedError
+    def generate_grocery_list(self, inventory):
+        grocery_list = self.get_list("this_week") if hasattr(self, "get_list") else self.lists["this_week"]
+        grocery_list.clear()
+
+        for item in inventory.list_out_of_stock():
+            grocery_list.add_item(item.name, 1)
+
+        return grocery_list
 
     def all_items(self) -> List[Item]:
         d = self._items_dict()

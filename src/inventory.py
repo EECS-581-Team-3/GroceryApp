@@ -3,47 +3,31 @@ from item import Item
 
 class Inventory:
     def __init__(self) -> None:
-        self._items: Dict[str, Item] = {}
-        self.inventory = self._items
+        self.items = {}
 
-    def add_item(self, new_item: Item) -> None:
-        self._items[new_item.name] = new_item
-
-    def addItem(self, new_item: Item) -> None:
-        self.add_item(new_item)
+    def add_item(self, new_item: Item, quantity: int = 1) -> None:
+        key = new_item.strip().lower()
+        if key in self.items:
+            self.items[key].increase(quantity)
+        else:
+            self.items[key] = Item(new_item, quantity)
+        return self.items[key]
 
     def get_item(self, name: str) -> Optional[Item]:
-        return self._items.get(name)
-
-    def getItem(self, name: str) -> Optional[Item]:
-        return self.get_item(name)
+        return self.items.get(name.strip().lower())
 
     def remove_item(self, name: str) -> None:
-        self._items.pop(name, None)
-
-    def removeItem(self, name: str) -> None:
-        self.remove_item(name)
+        """Remove an item completely."""
+        key = name.strip().lower()
+        if key in self.items:
+            del self.items[key]
 
     def all_items(self) -> List[Item]:
-        return list(self._items.values())
+        return list(self.items.values())
 
-    def allItems(self) -> List[Item]:
-        return self.all_items()
+    def list_out_of_stock(self):
+        """Return all out-of-stock items."""
+        return [item for item in self.items.values() if not item.in_stock]
 
-    def contains(self, name: str) -> bool:
-        return name in self._items
-
-    def __contains__(self, name: str) -> bool:
-        return self.contains(name)
-
-    def values(self):
-        return self._items.values()
-
-    def items(self):
-        return self._items.items()
-
-    def __iter__(self):
-        return iter(self._items)
-
-    def clear(self) -> None:
-        self._items.clear()
+    def __repr__(self):
+        return f"Inventory({len(self.items)} items)"

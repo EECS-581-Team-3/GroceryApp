@@ -1,10 +1,16 @@
 from typing import Dict, List, Optional
 from inventory import Inventory
 from item import Item
+from grocery_list_manager import ListManager
+from data_persistence import DataPersistence
+from analytics_manager import AnalyticsManager
 
 class InventoryManager:
-    def __init__(self, inventory: object):
-        self.inventory = inventory
+    def __init__(self):
+        self.persistence = DataPersistence()
+        self.analytics = AnalyticsManager()
+        self.inventory = Inventory()
+        self.grocery_list_manager = ListManager()
 
     def _items_dict(self) -> Dict[str, Item]:
         if isinstance(self.inventory, dict):
@@ -61,8 +67,26 @@ class InventoryManager:
             return
         item.quantity = quantity
 
-    def generateGroceryList(self):
-        raise NotImplementedError
+    def RemoveItem(self, name: str):
+        """Remove item from inventory and grocery list."""
+        self.inventory.remove_item(name)
+        self.grocery_list_manager.remove_from_list(name)
+
+    def list_inventory(self):
+        return self.inventory.all_items()
+
+    def list_out_of_stock(self):
+        return self.inventory.list_out_of_stock()
+
+    def generate_grocery_list(self, list_name="this_week"):
+        """Rebuild grocery list from out-of-stock items."""
+        return self.grocery_list_manager.generate_grocery_list(self.inventory, list_name)
+
+    def get_grocery_list(self, list_name="this_week"):
+        return self.grocery_list_manager.get_list(list_name)
+    
+    def __repr__(self):
+        return "InventoryManager(Inventory + GroceryListManager)"
 
     def all_items(self) -> List[Item]:
         d = self._items_dict()
