@@ -12,6 +12,7 @@ from kivy.metrics import dp
 from kivy.core.window import Window
 from inventory_manager import InventoryManager
 from item import Item
+from typing import List
 
 from grocery_list import GroceryList
 import os
@@ -21,6 +22,7 @@ from button_layout import ButtonLayout
 from button_model import ButtonModel
 from home_button import HomeButtonModel
 from edit_button import EditButtonModel
+from confirm_button import ConfirmButtonModel
 
 Window.size = (500, 750)
 Window.clearcolor = (0.84, 0.95, 1, 1)
@@ -49,12 +51,16 @@ class StorageManagerPage(BoxLayout):
     def __init__(self, inventory_manager: InventoryManager, **kwargs):
         super().__init__(orientation='vertical', **kwargs)
         self.inventory_manager = inventory_manager
-        self.add_widget(Label(text='Inventory', font_size=24, font_name='Verdana', size_hint_y=None, height=dp(50), color=(0.078,0.369,0.447,1)))
-        self.button_count = 6
+        self.locations = App.get_running_app().storage_locations
+        self.build_layout()
+
+    def build_layout(self):
+        self.clear_widgets()
+        self.add_widget(Label(text='Storage Manager', font_size=24, font_name='Verdana', size_hint_y=None, height=dp(50), color=(0.078,0.369,0.447,1)))
         gridlayout = GridLayout(cols=2, spacing=40, padding=30)
-        btns = [ButtonModel(text='test', callback=self.button) for i in range(5)]
-        for btn in btns:
+        for btn in self.generate_buttons(self.locations):
             gridlayout.add_widget(btn)
+            print(btn.callback)
         self.add_widget(gridlayout)
         footer = BoxLayout(orientation='horizontal', spacing=80, padding=125)
         home_btn = HomeButtonModel(callback=self.go_home)
@@ -63,8 +69,8 @@ class StorageManagerPage(BoxLayout):
         footer.add_widget(edit_btn)
         self.add_widget(footer)
 
-    def button(self):
-        print("Button pressed.")
+    def on_enter(self, *args):
+        self.build_layout()
 
     def go_edit_SM(self, instance):
         App.get_running_app().sm.current = 'edit_SM'
@@ -72,10 +78,70 @@ class StorageManagerPage(BoxLayout):
     def go_home(self, instance):
         App.get_running_app().sm.current = 'home'
 
+    def generate_buttons(self, titles: List[str]) -> List[ButtonModel]:
+        # takes in list of strings and creates list of button 
+        # models with titles and callbacks in format of go_{title}
+        btns = []
+        for title in titles:
+            callback_name = f"go_{title.lower()}"
+            def method(self, instance=None, name=title.lower()):
+                App.get_running_app().sm.current = name
+            setattr(StorageManagerPage, callback_name, method)
+            callback = getattr(self, callback_name)
+            btn = ButtonModel(text=title, callback=callback)
+            btns.append(btn)
+        return btns
+    
+    
 class EditSMPage(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(orientation='vertical', **kwargs)
+        self.locations = App.get_running_app().storage_locations
         self.add_widget(Label(text='Test', color=(0,0,0,1)))
+        self.build_layout()
+
+    def build_layout(self):
+        self.clear_widgets()
+        self.add_widget(Label(text='Edit Storage', font_size=24, 
+                              font_name='Verdana', size_hint_y=None,
+                              height=dp(50), color=(0.078,0.369,0.447,1)))
+        
+        rows = BoxLayout(orientation='vertical', spacing=10)
+        
+        for name in self.locations:
+            row = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(44), spacing=10, padding=3) 
+            row.add_widget(TextInput(text=name, multiline=False, background_color=(0.61, 0.867, 0.937, 1), foreground_color=(0.078,0.369,0.447,1)))
+            row.add_widget(Button(text='-', background_normal='', background_color=(0.61, 0.867, 0.937, 1), color=(0.078,0.369,0.447,1), font_size=20, bold=True))
+            rows.add_widget(row)
+        
+        add_row = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(44), spacing=10, padding=3)
+        self.name_input = TextInput(hint_text='Name', multiline=False, background_color=(0.61, 0.867, 0.937, 1), foreground_color=(0.078,0.369,0.447,1))
+        add_btn = Button(text='+', background_normal='', background_color=(0.61, 0.867, 0.937, 1), color=(0.078,0.369,0.447,1), font_size=20, bold=True)
+        add_row.add_widget(self.name_input)
+        add_row.add_widget(add_btn)
+        rows.add_widget(add_row)
+
+        self.add_widget(rows)
+
+        self.scroll = ScrollView()
+        self.list_grid = GridLayout(cols=1, size_hint_y=None, spacing=dp(6), padding=dp(6))
+        self.list_grid.bind(minimum_height=self.list_grid.setter('height'))
+        self.scroll.add_widget(self.list_grid)
+        self.add_widget(self.scroll)
+
+        footer = BoxLayout(orientation='horizontal', spacing=80, padding=125)
+        home_btn = HomeButtonModel(callback=self.go_home)
+        confirm_btn = ConfirmButtonModel(callback=self.go_SM)
+        footer.add_widget(home_btn)
+        footer.add_widget(confirm_btn)
+        self.add_widget(footer)
+
+    def go_SM(self):
+        App.get_running_app().sm.current = 'store manager'
+    
+    def go_home(self):
+        App.get_running_app().sm.current = 'home'
+
 
 class GroceryPage(BoxLayout):
     def __init__(self, **kwargs):
@@ -178,7 +244,11 @@ class HomeScreen(Screen):
 class StoreManagerScreen(Screen):
     def __init__(self, inventory_manager: InventoryManager, **kwargs):
         super().__init__(**kwargs)
-        self.add_widget(StorageManagerPage(inventory_manager))
+        self.page = StorageManagerPage(inventory_manager)
+        self.add_widget(self.page)
+    
+    def on_enter(self, *args):
+        self.page.on_enter()
 
 class GroceryScreen(Screen):
     def __init__(self, **kwargs):
@@ -194,6 +264,7 @@ class InventoryApp(App):
     def build(self):
         self.inventory_manager = InventoryManager()
         self.sm = ScreenManager()
+        self.storage_locations = ['Pantry', 'Fridge', 'Freezer']
         self.sm.add_widget(HomeScreen(name='home'))
         self.sm.add_widget(EditSMScreen(self.inventory_manager, name='edit_SM'))
         self.sm.add_widget(StoreManagerScreen(self.inventory_manager, name='store manager'))
