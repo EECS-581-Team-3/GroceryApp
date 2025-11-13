@@ -90,9 +90,31 @@ class StorageManagerPage(BoxLayout):
             callback = getattr(self, callback_name)
             btn = ButtonModel(text=title, callback=callback)
             btns.append(btn)
+        self.generate_screens()
         return btns
     
-    
+    def generate_screens(self):
+        sm = App.get_running_app().sm
+        for name in self.locations:
+            _name = name.lower()
+            if not sm.has_screen(_name):
+                sm.add_widget(LocationTemplateScreen(title=_name))
+            
+
+
+class LocationTemplatePage(BoxLayout):
+    def __init__(self, title:str, **kwargs):
+        super().__init__(orientation='vertical', **kwargs)
+        self.title = title
+        self.build_layout()
+
+    def build_layout(self):
+        self.add_widget(Label(text=self.title, color=(0,0,0,1), font_size=25))
+        self.add_widget(Button(text='home', on_press=self.go_home))
+        
+    def go_home(self, instance):
+        App.get_running_app().sm.current = 'home'
+
 class EditSMPage(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(orientation='vertical', **kwargs)
@@ -249,6 +271,11 @@ class StoreManagerScreen(Screen):
     
     def on_enter(self, *args):
         self.page.on_enter()
+
+class LocationTemplateScreen(Screen):
+    def __init__(self, title:str, **kwargs):
+        super().__init__(name=title.lower(), **kwargs)
+        self.add_widget(LocationTemplatePage(title))
 
 class GroceryScreen(Screen):
     def __init__(self, **kwargs):
