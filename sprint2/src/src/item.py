@@ -5,6 +5,7 @@ class Item:
         self.name = name
         self.quantity = quantity
         self.in_stock = in_stock
+        self.location = None
 
     def updateQuantity(self, quantity:int):
         self.quantity = quantity

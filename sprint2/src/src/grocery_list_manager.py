@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Any
 from item import Item
 
 class ListManager:
-    def __init__(self, inventory: Any) -> None:
+    def __init__(self, inventory: Any = None) -> None:
         self.inventory = inventory
 
     def _items_dict(self) -> Dict[str, Item]:

@@ -7,52 +7,75 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.checkbox import CheckBox
+from kivy.uix.image import Image
 from kivy.metrics import dp
+from kivy.core.window import Window
 from inventory_manager import InventoryManager
 from item import Item
+
 from grocery_list import GroceryList
+import os
+
+from title_layout import TitleLayout
+from button_layout import ButtonLayout
+from button_model import ButtonModel
+from home_button import HomeButtonModel
+from edit_button import EditButtonModel
+
+Window.size = (500, 750)
+Window.clearcolor = (0.84, 0.95, 1, 1)
+
+folder_path = os.path.join(os.path.dirname(__file__), 'images')
+top_img_path = os.path.join(folder_path, 'top.png')
+bottom_img_path = os.path.join(folder_path, 'bottom.png')
 
 class HomePage(BoxLayout):
     def __init__(self, **kwargs):
-        super().__init__(orientation='vertical', padding=dp(20), spacing=dp(12), **kwargs)
-        self.add_widget(Label(text='Pantry Pro', font_size=32, size_hint_y=None, height=dp(56)))
-        self.add_widget(Button(text='Add Item to Inventory', size_hint_y=None, height=dp(48), on_press=self.go_add))
-        self.add_widget(Button(text='View Inventory', size_hint_y=None, height=dp(48), on_press=self.go_inventory))
-        self.add_widget(Button(text='View Grocery List', size_hint_y=None, height=dp(48), on_press=self.go_grocery))
-
-    def go_add(self, instance):
-        App.get_running_app().sm.current = 'add'
+        super(HomePage, self).__init__(orientation='vertical', spacing=0, **kwargs)
+        title = TitleLayout()
+        self.add_widget(title)
+        self.add_widget(Image(source=top_img_path, size_hint=(.5, .5), pos_hint={'x':.25, 'y':1}))
+        self.add_widget(Image(source=bottom_img_path, size_hint=(.5, .5), pos_hint={'x':.25, 'y':0}))
+        buttons = ButtonLayout(pantry_callback=self.go_inventory, grocery_callback=self.go_grocery)
+        self.add_widget(buttons)
 
     def go_inventory(self, instance):
-        App.get_running_app().sm.current = 'inventory'
+        App.get_running_app().sm.current = 'store manager'
 
     def go_grocery(self, instance):
         App.get_running_app().sm.current = 'grocery'
 
-class InventoryPage(BoxLayout):
+class StorageManagerPage(BoxLayout):
     def __init__(self, inventory_manager: InventoryManager, **kwargs):
-        super().__init__(orientation='vertical', padding=dp(12), spacing=dp(8), **kwargs)
+        super().__init__(orientation='vertical', **kwargs)
         self.inventory_manager = inventory_manager
-        self.add_widget(Label(text='Inventory', font_size=24, size_hint_y=None, height=dp(48)))
-        self.scroll = ScrollView(size_hint=(1, 1))
-        self.grid = GridLayout(cols=1, size_hint_y=None, spacing=dp(6), padding=dp(6))
-        self.grid.bind(minimum_height=self.grid.setter('height'))
-        self.scroll.add_widget(self.grid)
-        self.add_widget(self.scroll)
-        footer = BoxLayout(size_hint_y=None, height=dp(56))
-        footer.add_widget(Button(text='Back to Home', on_press=self.go_home))
+        self.add_widget(Label(text='Inventory', font_size=24, font_name='Verdana', size_hint_y=None, height=dp(50), color=(0.078,0.369,0.447,1)))
+        self.button_count = 6
+        gridlayout = GridLayout(cols=2, spacing=40, padding=30)
+        btns = [ButtonModel(text='test', callback=self.button) for i in range(5)]
+        for btn in btns:
+            gridlayout.add_widget(btn)
+        self.add_widget(gridlayout)
+        footer = BoxLayout(orientation='horizontal', spacing=80, padding=125)
+        home_btn = HomeButtonModel(callback=self.go_home)
+        edit_btn = EditButtonModel(callback=self.go_edit_SM)
+        footer.add_widget(home_btn)
+        footer.add_widget(edit_btn)
         self.add_widget(footer)
-        self.refresh()
 
-    def refresh(self):
-        self.grid.clear_widgets()
-        for it in self.inventory_manager.all_items():
-            status = 'In stock' if getattr(it, 'inStock', getattr(it, 'status', True)) else 'Out of stock'
-            lbl = Label(text=f'{it.name} — {it.quantity} — {status}', size_hint_y=None, height=dp(32))
-            self.grid.add_widget(lbl)
+    def button(self):
+        print("Button pressed.")
+
+    def go_edit_SM(self, instance):
+        App.get_running_app().sm.current = 'edit_SM'
 
     def go_home(self, instance):
         App.get_running_app().sm.current = 'home'
+
+class EditSMPage(BoxLayout):
+    def __init__(self, **kwargs):
+        super().__init__(orientation='vertical', **kwargs)
+        self.add_widget(Label(text='Test', color=(0,0,0,1)))
 
 class GroceryPage(BoxLayout):
     def __init__(self, **kwargs):
@@ -147,81 +170,33 @@ class GroceryPage(BoxLayout):
         self.refresh()
 
 
-
-class AddItemPage(BoxLayout):
-    def __init__(self, inventory_manager: InventoryManager, **kwargs):
-        super().__init__(orientation='vertical', padding=dp(12), spacing=dp(8), **kwargs)
-        self.inventory_manager = inventory_manager
-        self.add_widget(Label(text='Add Item', font_size=24, size_hint_y=None, height=dp(48)))
-        self.name_input = TextInput(hint_text='Item name', size_hint_y=None, height=dp(40))
-        self.add_widget(self.name_input)
-        self.qty_input = TextInput(hint_text='Quantity (integer)', input_filter='int', size_hint_y=None, height=dp(40))
-        self.add_widget(self.qty_input)
-        row = BoxLayout(size_hint_y=None, height=dp(40))
-        row.add_widget(Label(text='In Stock:', size_hint_x=None, width=dp(90)))
-        self.in_stock_checkbox = CheckBox(active=True)
-        row.add_widget(self.in_stock_checkbox)
-        self.add_widget(row)
-        btn_row = BoxLayout(size_hint_y=None, height=dp(56))
-        btn_row.add_widget(Button(text='Cancel', on_press=self.go_home))
-        btn_row.add_widget(Button(text='Add', on_press=self.on_add))
-        self.add_widget(btn_row)
-
-    def on_add(self, instance):
-        name = self.name_input.text.strip()
-        qty_text = self.qty_input.text.strip()
-        if not name:
-            return
-        quantity = int(qty_text) if qty_text else 0
-        in_stock = bool(self.in_stock_checkbox.active)
-        if hasattr(self.inventory_manager, 'addItem'):
-            self.inventory_manager.addItem(name, quantity, in_stock)
-        else:
-            self.inventory_manager.add_item(name, quantity, in_stock)
-        self.name_input.text = ''
-        self.qty_input.text = ''
-        app = App.get_running_app()
-        app.sm.current = 'inventory'
-        try:
-            inventory_screen = app.sm.get_screen('inventory')
-            for child in inventory_screen.children:
-                if isinstance(child, InventoryPage):
-                    child.refresh()
-                    break
-        except Exception:
-            pass
-
-    def go_home(self, instance):
-        App.get_running_app().sm.current = 'home'
-
 class HomeScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.add_widget(HomePage())
 
-class InventoryScreen(Screen):
+class StoreManagerScreen(Screen):
     def __init__(self, inventory_manager: InventoryManager, **kwargs):
         super().__init__(**kwargs)
-        self.add_widget(InventoryPage(inventory_manager))
+        self.add_widget(StorageManagerPage(inventory_manager))
 
 class GroceryScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.add_widget(GroceryPage())
 
-class AddItemScreen(Screen):
+class EditSMScreen(Screen):
     def __init__(self, inventory_manager: InventoryManager, **kwargs):
         super().__init__(**kwargs)
-        self.add_widget(AddItemPage(inventory_manager))
+        self.add_widget(EditSMPage())
 
 class InventoryApp(App):
     def build(self):
-        inv = {}
-        self.inventory_manager = InventoryManager(inv)
+        self.inventory_manager = InventoryManager()
         self.sm = ScreenManager()
         self.sm.add_widget(HomeScreen(name='home'))
-        self.sm.add_widget(AddItemScreen(self.inventory_manager, name='add'))
-        self.sm.add_widget(InventoryScreen(self.inventory_manager, name='inventory'))
+        self.sm.add_widget(EditSMScreen(self.inventory_manager, name='edit_SM'))
+        self.sm.add_widget(StoreManagerScreen(self.inventory_manager, name='store manager'))
         self.sm.add_widget(GroceryScreen(name='grocery'))
         return self.sm
 
