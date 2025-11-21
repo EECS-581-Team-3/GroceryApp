@@ -1,4 +1,4 @@
-from user_interface import InventoryApp
+from frontend.user_interface import InventoryApp
 
 
 if __name__ == '__main__':
