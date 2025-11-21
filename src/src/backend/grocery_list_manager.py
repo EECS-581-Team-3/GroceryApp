@@ -1,6 +1,7 @@
 # grocery_list_manager.py
 from typing import Dict, List, Optional, Any
-from item import Item
+
+from backend.item import Item
 
 class ListManager:
     def __init__(self, inventory: Any = None) -> None:

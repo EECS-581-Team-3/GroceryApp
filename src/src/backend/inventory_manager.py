@@ -1,9 +1,9 @@
 from typing import Dict, List, Optional
-from inventory import Inventory
-from item import Item
-from grocery_list_manager import ListManager
-from data_persistence import DataPersistence
-from analytics_manager import AnalyticsManager
+from backend.inventory import Inventory
+from backend.item import Item
+from backend.grocery_list_manager import ListManager
+from backend.data_persistence import DataPersistence
+from backend.analytics_manager import AnalyticsManager
 
 class InventoryManager:
     def __init__(self):

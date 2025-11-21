@@ -6,8 +6,7 @@ from kivy.uix.widget import Widget
 from kivy.metrics import dp
 import os
 
-folder_path = os.path.join(os.path.dirname(__file__), 'images')
-img_path = os.path.join(folder_path, 'home.png')
+img_path = "frontend/images/home.png"
 
 class HomeButtonModel(ButtonBehavior, Widget):
     callback = ObjectProperty(None)

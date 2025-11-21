@@ -1,4 +1,4 @@
-from button_model import ButtonModel
+from frontend.components.button_model import ButtonModel
 from kivy.uix.boxlayout import BoxLayout
 
 

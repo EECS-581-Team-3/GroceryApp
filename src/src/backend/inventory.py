@@ -1,5 +1,6 @@
 from typing import Dict, List, Optional
-from item import Item
+
+from backend.item import Item
 
 class Inventory:
     def __init__(self) -> None:

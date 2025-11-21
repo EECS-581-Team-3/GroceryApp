@@ -6,10 +6,9 @@ from kivy.uix.widget import Widget
 from kivy.metrics import dp
 import os
 
-folder_path = os.path.join(os.path.dirname(__file__), 'images')
-img_path = os.path.join(folder_path, 'confirm.png')
+img_path = "frontend/images/edit.png"
 
-class ConfirmButtonModel(ButtonBehavior, Widget):
+class EditButtonModel(ButtonBehavior, Widget):
     callback = ObjectProperty(None)
     bg_color = ListProperty([0.61, 0.867, 0.937, 1])
     outline_color = ListProperty([0.078, 0.369, 0.447, 1])

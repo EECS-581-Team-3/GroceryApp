@@ -1,6 +1,7 @@
 # grocery_list.py
 from typing import Dict
-from item import Item
+
+from backend.item import Item
 
 class GroceryList:
     def __init__(self, name: str = "this_week") -> None:

@@ -3,7 +3,7 @@ from kivy.uix.label import Label
 from kivy.metrics import dp
 import os
 
-font_path = os.path.join(os.path.dirname(__file__), "carterOne.ttf")
+font_path = "frontend/fonts/carterOne.ttf"
 
 class TitleLayout(AnchorLayout):
     def __init__(self, **kwargs):
