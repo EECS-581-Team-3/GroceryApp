@@ -11,5 +11,5 @@ Quick macOS / Linux setup:
 - Create venv python3 -m venv .venv (or: pyenv/asdf install 3.11.9 && pyenv local 3.11.9)
 - Activate venv macOS / Linux: source .venv/bin/activate
 - Upgrade pip python -m pip install --upgrade pip
-- Install dependencies pip install -r requirements.txt
+- Install dependencies pip install -r requirements_linux.txt
 - Run the app (adjust entrypoint if needed) python -m src.main or python user_interface.py
