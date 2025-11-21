@@ -58,7 +58,7 @@ class StorageManagerPage(BoxLayout):
 
     def build_layout(self):
         self.clear_widgets()
-        self.add_widget(Label(text='Storage Manager', font_size=24, font_name='Verdana', size_hint_y=None, height=dp(50), color=(0.078,0.369,0.447,1)))
+        self.add_widget(Label(text='Storage Manager', font_size=24, font_name='Roboto', size_hint_y=None, height=dp(50), color=(0.078,0.369,0.447,1)))
         gridlayout = GridLayout(cols=2, spacing=40, padding=30)
         for btn in self.generate_buttons(self.locations):
             gridlayout.add_widget(btn)
@@ -128,7 +128,7 @@ class EditSMPage(BoxLayout):
     def build_layout(self):
         self.clear_widgets()
         self.add_widget(Label(text='Edit Storage', font_size=24, 
-                              font_name='Verdana', size_hint_y=None,
+                              font_name='Roboto', size_hint_y=None,
                               height=dp(50), color=(0.078,0.369,0.447,1)))
         
         rows = BoxLayout(orientation='vertical', spacing=10)
