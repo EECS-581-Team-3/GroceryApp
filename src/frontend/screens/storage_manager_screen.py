@@ -14,7 +14,7 @@ from backend.inventory_manager import InventoryManager
 from frontend.components.button_model import ButtonModel
 from frontend.components.home_button import HomeButtonModel
 from frontend.components.edit_button import EditButtonModel
-
+from .location_template_screen import LocationTemplateScreen
 
 class StorageManagerScreen(Screen):
     def __init__(self, inventory_manager: InventoryManager, **kwargs):

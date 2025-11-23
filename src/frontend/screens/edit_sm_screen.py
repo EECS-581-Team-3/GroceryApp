@@ -14,6 +14,7 @@ from backend.inventory_manager import InventoryManager
 from frontend.components.home_button import HomeButtonModel
 from frontend.components.confirm_button import ConfirmButtonModel
 
+
 Window.size = (500, 750)
 Window.clearcolor = (0.84, 0.95, 1, 1)
 
@@ -41,13 +42,15 @@ class EditSMPage(BoxLayout):
         
         for name in self.locations:
             row = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(44), spacing=10, padding=3) 
-            row.add_widget(TextInput(text=name, multiline=False, background_color=(0.61, 0.867, 0.937, 1), foreground_color=(0.078,0.369,0.447,1)))
-            row.add_widget(Button(text='-', background_normal='', background_color=(0.61, 0.867, 0.937, 1), color=(0.078,0.369,0.447,1), font_size=20, bold=True))
+            row.add_widget(Label(text=name, color=(0.078,0.369,0.447,1)))
+            btn= Button(text='-', background_normal='', background_color=(0.61, 0.867, 0.937, 1), color=(0.078,0.369,0.447,1), font_size=20, bold=True)
+            btn.bind(on_release=lambda inst, n=name, r=row:self.remove_location(n, r))
+            row.add_widget(btn)
             rows.add_widget(row)
         
         add_row = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(44), spacing=10, padding=3)
         self.name_input = TextInput(hint_text='Name', multiline=False, background_color=(0.61, 0.867, 0.937, 1), foreground_color=(0.078,0.369,0.447,1))
-        add_btn = Button(text='+', background_normal='', background_color=(0.61, 0.867, 0.937, 1), color=(0.078,0.369,0.447,1), font_size=20, bold=True)
+        add_btn = Button(text='+', background_normal='', background_color=(0.61, 0.867, 0.937, 1), color=(0.078,0.369,0.447,1), font_size=20, bold=True, on_press=self.add_location)
         add_row.add_widget(self.name_input)
         add_row.add_widget(add_btn)
         rows.add_widget(add_row)
@@ -66,6 +69,25 @@ class EditSMPage(BoxLayout):
         footer.add_widget(home_btn)
         footer.add_widget(confirm_btn)
         self.add_widget(footer)
+
+    def remove_location(self, name, row):
+        if name in self.locations:
+            self.locations.remove(name)
+            parent = row.parent
+            if parent:
+                print(f'Parent = {parent}')
+                parent.remove_widget(row)
+        self.build_layout()
+
+
+    def add_location(self, instance):
+        name = self.name_input.text
+        if name in self.locations:
+            return
+        else:
+            self.locations.append(name)
+            self.build_layout()
+
 
     def go_SM(self):
         App.get_running_app().sm.current = 'store manager'
