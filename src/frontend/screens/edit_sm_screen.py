@@ -8,15 +8,10 @@ from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.metrics import dp
-from kivy.core.window import Window
 
 from backend.inventory_manager import InventoryManager
 from frontend.components.home_button import HomeButtonModel
 from frontend.components.confirm_button import ConfirmButtonModel
-
-
-Window.size = (500, 750)
-Window.clearcolor = (0.84, 0.95, 1, 1)
 
 
 class EditSMScreen(Screen):
@@ -29,69 +24,103 @@ class EditSMPage(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(orientation='vertical', **kwargs)
         self.locations = App.get_running_app().storage_locations
-        self.add_widget(Label(text='Test', color=(0,0,0,1)))
         self.build_layout()
 
     def build_layout(self):
         self.clear_widgets()
-        self.add_widget(Label(text='Edit Storage', font_size=24, 
-                              font_name='Roboto', size_hint_y=None,
-                              height=dp(50), color=(0.078,0.369,0.447,1)))
+        self.add_widget(Label(
+            text='Edit Storage Locations', 
+            font_size=24, 
+            font_name='Roboto', 
+            size_hint_y=None,
+            height=dp(50), 
+            color=(0.078, 0.369, 0.447, 1)
+        ))
         
-        rows = BoxLayout(orientation='vertical', spacing=10)
-        
+        rows = BoxLayout(orientation='vertical', spacing=10, padding=10)
+
         for name in self.locations:
-            row = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(44), spacing=10, padding=3) 
-            row.add_widget(Label(text=name, color=(0.078,0.369,0.447,1)))
-            btn= Button(text='-', background_normal='', background_color=(0.61, 0.867, 0.937, 1), color=(0.078,0.369,0.447,1), font_size=20, bold=True)
-            btn.bind(on_release=lambda inst, n=name, r=row:self.remove_location(n, r))
-            row.add_widget(btn)
+            row = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(44), spacing=10, padding=3)
+            row.add_widget(Label(
+                text=name, 
+                color=(0.078, 0.369, 0.447, 1),
+                size_hint_x=0.8
+            ))
+            remove_btn = Button(
+                text='-', 
+                background_normal='', 
+                background_color=(0.61, 0.867, 0.937, 1), 
+                color=(0.078, 0.369, 0.447, 1), 
+                font_size=20, 
+                bold=True,
+                size_hint_x=0.2
+            )
+            remove_btn.bind(on_release=lambda inst, n=name: self.remove_location(n))
+            row.add_widget(remove_btn)
             rows.add_widget(row)
-        
+
         add_row = BoxLayout(orientation='horizontal', size_hint_y=None, height=dp(44), spacing=10, padding=3)
-        self.name_input = TextInput(hint_text='Name', multiline=False, background_color=(0.61, 0.867, 0.937, 1), foreground_color=(0.078,0.369,0.447,1))
-        add_btn = Button(text='+', background_normal='', background_color=(0.61, 0.867, 0.937, 1), color=(0.078,0.369,0.447,1), font_size=20, bold=True, on_press=self.add_location)
+        self.name_input = TextInput(
+            hint_text='New Location Name', 
+            multiline=False, 
+            background_color=(0.61, 0.867, 0.937, 1), 
+            foreground_color=(0.078, 0.369, 0.447, 1)
+        )
+        add_btn = Button(
+            text='+', 
+            background_normal='', 
+            background_color=(0.61, 0.867, 0.937, 1), 
+            color=(0.078, 0.369, 0.447, 1), 
+            font_size=20, 
+            bold=True,
+            on_press=self.add_location
+        )
         add_row.add_widget(self.name_input)
         add_row.add_widget(add_btn)
         rows.add_widget(add_row)
 
         self.add_widget(rows)
 
-        self.scroll = ScrollView()
-        self.list_grid = GridLayout(cols=1, size_hint_y=None, spacing=dp(6), padding=dp(6))
-        self.list_grid.bind(minimum_height=self.list_grid.setter('height'))
-        self.scroll.add_widget(self.list_grid)
-        self.add_widget(self.scroll)
+        self.add_widget(BoxLayout(size_hint_y=1))
 
-        footer = BoxLayout(orientation='horizontal', spacing=80, padding=125)
+        footer = BoxLayout(orientation='horizontal', spacing=80, padding=125, size_hint_y=None, height=dp(100))
         home_btn = HomeButtonModel(callback=self.go_home)
         confirm_btn = ConfirmButtonModel(callback=self.go_SM)
         footer.add_widget(home_btn)
         footer.add_widget(confirm_btn)
         self.add_widget(footer)
 
-    def remove_location(self, name, row):
+    def remove_location(self, name):
+        """Remove a storage location."""
         if name in self.locations:
             self.locations.remove(name)
-            parent = row.parent
-            if parent:
-                print(f'Parent = {parent}')
-                parent.remove_widget(row)
-        self.build_layout()
 
-
-    def add_location(self, instance):
-        name = self.name_input.text
-        if name in self.locations:
-            return
-        else:
-            self.locations.append(name)
+            sm = App.get_running_app().sm
+            screen_name = name.lower()
+            if sm.has_screen(screen_name):
+                screen = sm.get_screen(screen_name)
+                sm.remove_widget(screen)
+                print(f"Removed screen: {name}")
+            
             self.build_layout()
 
+    def add_location(self, instance):
+        """Add a new storage location."""
+        name = self.name_input.text.strip()
+        if not name:
+            return
+
+        if any(loc.lower() == name.lower() for loc in self.locations):
+            print(f"Location '{name}' already exists")
+            return
+        
+        self.locations.append(name)
+        self.name_input.text = ''
+        self.build_layout()
+        print(f"Added location: {name}")
 
     def go_SM(self):
         App.get_running_app().sm.current = 'store manager'
     
     def go_home(self):
         App.get_running_app().sm.current = 'home'
-

@@ -1,4 +1,4 @@
-# pantry_screen.py
+# storage_location_screen.py
 from kivy.app import App
 from kivy.uix.screenmanager import Screen
 from kivy.uix.boxlayout import BoxLayout
@@ -7,7 +7,6 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
-from kivy.uix.checkbox import CheckBox
 from kivy.metrics import dp
 from kivy.core.window import Window
 
@@ -21,27 +20,33 @@ Window.size = (500, 750)
 Window.clearcolor = (0.84, 0.95, 1, 1)
 
 
-class PantryScreen(Screen):
-    def __init__(self, inventory_manager: InventoryManager, **kwargs):
-        super().__init__(name='pantry', **kwargs)
-        self.page = PantryPage(inventory_manager)
+class StorageLocationScreen(Screen):
+    """Dynamic screen that can represent any storage location."""
+    def __init__(self, location_name: str, inventory_manager: InventoryManager, **kwargs):
+        super().__init__(name=location_name.lower(), **kwargs)
+        self.location_name = location_name
+        self.page = StorageLocationPage(location_name, inventory_manager)
         self.add_widget(self.page)
     
     def on_enter(self, *args):
+        """Refresh page when screen is entered."""
         self.page.on_enter()
 
-class PantryPage(BoxLayout):
-    def __init__(self, inventory_manager: InventoryManager, **kwargs):
+
+class StorageLocationPage(BoxLayout):
+    """Dynamic page for any storage location."""
+    def __init__(self, location_name: str, inventory_manager: InventoryManager, **kwargs):
         super().__init__(orientation='vertical', **kwargs)
+        self.location_name = location_name
         self.inventory_manager = inventory_manager
         self.build_layout()
 
     def build_layout(self):
         self.clear_widgets()
-        
+
         self.add_widget(
             Label(
-                text="[b]Pantry[/b]",
+                text=f"[b]{self.location_name}[/b]",
                 markup=True,
                 font_size="28sp",
                 size_hint_y=None,
@@ -115,8 +120,8 @@ class PantryPage(BoxLayout):
 
         footer = BoxLayout(
             orientation='horizontal', 
-            spacing=40,  
-            padding=100,  
+            spacing=40,
+            padding=100,
             size_hint_y=None,
             height=dp(100)
         )
@@ -132,6 +137,7 @@ class PantryPage(BoxLayout):
         self.refresh_items()
 
     def add_item(self, instance):
+        """Add a new item to this storage location."""
         name = (self.item_name_input.text or '').strip()
         if not name:
             return
@@ -146,6 +152,7 @@ class PantryPage(BoxLayout):
         try:
             in_stock = qty > 0
             self.inventory_manager.addItem(name, qty, in_stock)
+
             all_items = self.inventory_manager.all_items()
             item = None
             for it in all_items:
@@ -154,7 +161,7 @@ class PantryPage(BoxLayout):
                     break
 
             if item:
-                item.location = 'Pantry'
+                item.location = self.location_name
                 print(f"Added item: {item.name}, Qty: {item.quantity}, Location: {item.location}")
             else:
                 print(f"Warning: Item '{name}' was added but not found in inventory")
@@ -163,15 +170,14 @@ class PantryPage(BoxLayout):
             print(f"Error adding item: {e}")
             import traceback
             traceback.print_exc()
-        
+
         self.item_name_input.text = ''
         self.item_qty_input.text = ''
-        
+
         self.refresh_items()
-        
-        print(f"All pantry items: {[(i.name, getattr(i, 'location', None)) for i in self.inventory_manager.all_items() if getattr(i, 'location', None) == 'Pantry']}")
 
     def refresh_items(self):
+        """Refresh the item list display."""
         self.grid.clear_widgets()
         
         for h in ("Qty", "Item", "Status"):
@@ -182,12 +188,14 @@ class PantryPage(BoxLayout):
                     color=(0.0, 0.33, 0.43, 1),
                 )
             )
-        
+
         all_items = self.inventory_manager.all_items()
-        pantry_items = [item for item in all_items if getattr(item, 'location', None) == 'Pantry']
-        pantry_items.sort(key=lambda x: x.name.lower())
-        
-        for item in pantry_items:
+        location_items = [item for item in all_items 
+                         if getattr(item, 'location', None) == self.location_name]
+
+        location_items.sort(key=lambda x: x.name.lower())
+
+        for item in location_items:
             qty = item.quantity
             name = item.name
             status = "In Stock" if item.in_stock else "Out"
@@ -197,15 +205,17 @@ class PantryPage(BoxLayout):
             self.grid.add_widget(TableCell(text=status, color=(0, 0, 0, 1)))
 
     def on_enter(self, *args):
+        """Refresh the layout when entering this screen."""
         self.refresh_items()
 
     def go_back(self, instance):
+        """Navigate back to Storage Manager."""
         App.get_running_app().sm.current = 'store manager'
 
     def go_home(self, instance):
+        """Navigate back to home screen."""
         App.get_running_app().sm.current = 'home'
-
+    
     def go_edit(self, instance):
+        """Navigate to edit mode."""
         App.get_running_app().sm.current = 'edit_SM'
-
-
