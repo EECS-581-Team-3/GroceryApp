@@ -38,7 +38,7 @@ class GroceryPage(BoxLayout):
             app.grocery_list = GroceryList()
         self.grocery_list: GroceryList = app.grocery_list
 
-        self.add_widget(Label(text='Grocery List', font_size=20, size_hint_y=None, height=dp(40)))
+        self.add_widget(Label(text='Grocery List', font_size=30, size_hint_y=None, height=dp(40),color=(0, 0, 0, 1)))
         self.add_widget(Button(text='Back to Home', size_hint_y=None, height=dp(40), on_press=self.go_home))
 
         row = BoxLayout(size_hint_y=None, height=dp(44), spacing=dp(8))
@@ -49,6 +49,10 @@ class GroceryPage(BoxLayout):
         row.add_widget(self.qty_input)
         row.add_widget(add_btn)
         self.add_widget(row)
+        clear_btn = Button(text='Clear All', size_hint_y=None, height=dp(40))
+        clear_btn.bind(on_press=self._on_clear_all)
+        self.add_widget(clear_btn)
+
 
         self.scroll = ScrollView()
         self.list_grid = GridLayout(cols=1, size_hint_y=None, spacing=dp(6), padding=dp(6))
@@ -70,34 +74,35 @@ class GroceryPage(BoxLayout):
         except ValueError:
             qty = 1
 
-        try:
-            item = Item(name, qty)
-        except Exception:
-            item = Item(name, qty)  
-
-        item.quantity = qty
-        setattr(item, 'picked', False)
-
-        try:
-            self.grocery_list.add_item(item)
-        except Exception:
-            if not hasattr(self.grocery_list, 'items'):
-                self.grocery_list.items = {}
-            self.grocery_list.items[item.name] = item
+        self.grocery_list.add_item(name, qty)
 
         self.name_input.text = ''
         self.qty_input.text = ''
         self.refresh()
 
+    def _on_clear_all(self, instance):
+        self.grocery_list.clear()
+        self.refresh()
+
     def refresh(self):
         self.list_grid.clear_widgets()
-        items = getattr(self.grocery_list, 'items', {}) or {}
-        for it in sorted(items.values(), key=lambda i: i.name.lower()):
+        items = self.grocery_list.list_items() or []
+        for it in sorted(items, key=lambda i: i.name.lower()):
             line = BoxLayout(size_hint_y=None, height=dp(40), spacing=dp(8))
 
-            lbl = Label(text=f'{it.name} — {it.quantity}', size_hint_x=0.8, halign='left')
+            lbl = Label(text=f'{it.name} — {it.quantity}', size_hint_x=0.8, halign='left',color=(0, 0, 0, 1))
             lbl.bind(size=lbl.setter('text_size'))
             line.add_widget(lbl)
+
+            # Decrease quantity
+            dec_btn = Button(text='-', size_hint_x=None, width=dp(40))
+            dec_btn.bind(on_press=lambda btn, n=it.name: self._change_quantity(n, -1))
+            line.add_widget(dec_btn)
+
+            # Increase quantity
+            inc_btn = Button(text='+', size_hint_x=None, width=dp(40))
+            inc_btn.bind(on_press=lambda btn, n=it.name: self._change_quantity(n, +1))
+            line.add_widget(inc_btn)
 
             picked_cb = CheckBox(active=getattr(it, 'picked', False), size_hint_x=None, width=dp(40))
             picked_cb.bind(active=lambda cb, val, n=it.name: self._set_picked(n, val))
@@ -108,6 +113,11 @@ class GroceryPage(BoxLayout):
             line.add_widget(remove_btn)
 
             self.list_grid.add_widget(line)
+        
+    def _change_quantity(self, name: str, delta: int):
+        self.grocery_list.change_item_quantity(name, delta)
+        self.refresh()
+
 
     def _set_picked(self, name: str, picked: bool):
         items = getattr(self.grocery_list, 'items', {})
@@ -117,9 +127,9 @@ class GroceryPage(BoxLayout):
         setattr(itm, 'picked', bool(picked))
 
     def _remove_item(self, name: str):
-        items = getattr(self.grocery_list, 'items', {})
-        items.pop(name, None)
+        self.grocery_list.remove_item(name)
         self.refresh()
+
 
 
 
